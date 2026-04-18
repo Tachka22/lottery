@@ -1,0 +1,19 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- Добавим цветов (%highlight), чтобы логи было легче читать -->
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.lottery" level="INFO" />
+
+    <logger name="org.eclipse.jetty" level="INFO" />
+    <logger name="io.javalin" level="INFO" />
+    <logger name="com.zaxxer.hikari" level="INFO" />
+    <logger name="org.flywaydb" level="INFO" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

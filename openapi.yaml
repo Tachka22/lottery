@@ -1,0 +1,395 @@
+openapi: 3.0.0
+info:
+  title: Lottery API - Сценарий 3
+  version: 3.0.0
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+tags:
+  - name: Auth
+    description: Регистрация и вход
+  - name: Draws (User)
+    description: Просмотр активных тиражей
+  - name: Tickets
+    description: Покупка билетов, история, результаты
+  - name: Admin (Draws)
+    description: Управление тиражами (создание, старт, завершение, отмена)
+  - name: Reports
+    description: Отчёты по тиражам и билетам
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
+        status: { type: integer }
+    AuthRequest:
+      type: object
+      required: [email, password]
+      properties:
+        password: { type: string, minLength: 4, format: password }
+        email: {type: string, minLength: 4, format: mail}
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+    Draw:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        lotteryType: { type: string, default: "CLASSIC" }
+        status: { type: string, enum: [DRAFT, ACTIVE, FINISHED, CANCELLED] }
+        winningCombination: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time, nullable: true }
+    DrawCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 100 }
+        lotteryType: { type: string, default: "CLASSIC" }
+    DrawListResponse:
+      type: object
+      properties:
+        draws: { type: array, items: { $ref: '#/components/schemas/Draw' } }
+        total: { type: integer }
+    Ticket:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        drawId: { type: integer }
+        userId: { type: integer }
+        numbers: { type: string, example: "5,12,33,41,50" }
+        status: { type: string, enum: [PENDING, WIN, LOSE] }
+        createdAt: { type: string, format: date-time }
+    TicketCreateRequest:
+      type: object
+      required: [numbers]
+      properties:
+        numbers:
+          type: array
+          minItems: 5
+          maxItems: 5
+          items: { type: integer, minimum: 1, maximum: 50 }
+          uniqueItems: true
+          example: [5, 12, 33, 41, 50]
+    TicketResultResponse:
+      type: object
+      properties:
+        status: { type: string, enum: [PENDING, WIN, LOSE] }
+        winningCombination: { type: string, nullable: true }
+    TicketListResponse:
+      type: object
+      properties:
+        tickets: { type: array, items: { $ref: '#/components/schemas/Ticket' } }
+        total: { type: integer }
+    FinishDrawResponse:
+      type: object
+      properties:
+        winningCombination: { type: string }
+        winners: { type: integer }
+    CancelDrawResponse:
+      type: object
+      properties:
+        message: { type: string }
+        cancelledTickets: { type: integer }
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---------- Аутентификация (публичные) ----------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthRequest' }
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { description: Ошибка валидации }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вход и получение JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AuthRequest' }
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { description: Неверные учётные данные }
+
+  # ---------- Пользовательские операции ----------
+  /draws/active:
+    get:
+      tags: [Draws (User)]
+      summary: Список активных тиражей (статус ACTIVE)
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Draw' }
+
+  /draws/{drawId}/tickets:
+    post:
+      tags: [Tickets]
+      summary: Покупка билета на тираж
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TicketCreateRequest' }
+      responses:
+        '201':
+          description: Билет создан
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Ticket' }
+        '400': { description: Неверные числа или тираж не активен }
+        '404': { description: Тираж не найден }
+
+  /tickets:
+    get:
+      tags: [Tickets]
+      summary: История билетов текущего пользователя (пагинация)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Список билетов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TicketListResponse' }
+
+  /tickets/{ticketId}/result:
+    get:
+      tags: [Tickets]
+      summary: Результат конкретного билета
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Результат
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TicketResultResponse' }
+        '403': { description: Доступ запрещён (не владелец) }
+        '404': { description: Билет не найден }
+
+  # ---------- Административные операции (только ADMIN) ----------
+  /draws:
+    post:
+      tags: [ Admin (Draws) ]
+      summary: Создать новый тираж (статус DRAFT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DrawCreateRequest' }
+      responses:
+        '201':
+          description: Тираж создан
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draw' }
+        '403': { description: Требуется роль ADMIN }
+    get:
+      tags: [ Admin (Draws) ]
+      summary: Получить все тиражи (без фильтрации и пагинации)
+      description: Возвращает полный список тиражей в виде массива. Для фильтрации используйте /draws/filter.
+      responses:
+        '200':
+          description: Список всех тиражей
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Draw' }
+        '403': { description: Требуется роль ADMIN }
+
+  /draws/filter:
+    get:
+      tags: [ Admin (Draws) ]
+      summary: Получить тиражи с фильтрацией и пагинацией
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ DRAFT, ACTIVE, FINISHED, CANCELLED ]
+          description: Фильтр по статусу (необязательный)
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+          description: Количество записей на страницу
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0, minimum: 0 }
+          description: Смещение (пропустить первые N записей)
+      responses:
+        '200':
+          description: Список тиражей с пагинацией
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DrawListResponse' }
+        '403': { description: Требуется роль ADMIN }
+
+
+  /draws/{drawId}/start:
+    post:
+      tags: [Admin (Draws)]
+      summary: Начать тираж (перевести в ACTIVE)
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Тираж активирован
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draw' }
+        '400': { description: Невозможно начать (не DRAFT) }
+
+  /draws/{drawId}/finish:
+    post:
+      tags: [Admin (Draws)]
+      summary: Завершить тираж, сгенерировать выигрышную комбинацию и определить победителей
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Тираж завершён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinishDrawResponse' }
+        '400': { description: Тираж не ACTIVE }
+
+  /draws/{drawId}/cancel:
+    post:
+      tags: [Admin (Draws)]
+      summary: Отменить тираж (статус CANCELLED, все билеты → LOSE)
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Тираж отменён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CancelDrawResponse' }
+        '400': { description: Нельзя отменить (уже FINISHED или CANCELLED) }
+
+  /draws/completed:
+    get:
+      tags: [Admin (Draws)]
+      summary: История завершённых тиражей (статус FINISHED)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Список завершённых тиражей
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DrawListResponse' }
+
+  # ---------- Отчёты (только ADMIN для отчётов по тиражам, USER для своих билетов) ----------
+  /reports/draws/{drawId}:
+    get:
+      tags: [Reports]
+      summary: Отчёт по тиражу (включая список билетов) в JSON или CSV
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Отчёт
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  draw: { $ref: '#/components/schemas/Draw' }
+                  tickets: { type: array, items: { $ref: '#/components/schemas/Ticket' } }
+            text/csv:
+              schema:
+                type: string
+        '403': { description: Требуется ADMIN }
+
+  /reports/tickets:
+    get:
+      tags: [Reports]
+      summary: Выгрузка истории билетов текущего пользователя в JSON или CSV
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: История билетов
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TicketListResponse' }
+            text/csv:
+              schema:
+                type: string
