@@ -2,7 +2,6 @@ package org.lottery.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.flywaydb.core.Flyway;
 
 import javax.sql.DataSource;
 
@@ -11,7 +10,7 @@ public class DatabaseConfig {
 
     public static DataSource getDataSource() {
         if (dataSource == null) {
-            HikariConfig config = new HikariConfig();
+            var config = new HikariConfig();
             config.setJdbcUrl(System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/lottery"));
             config.setUsername(System.getenv().getOrDefault("DB_USER", "postgres"));
             config.setPassword(System.getenv().getOrDefault("DB_PASSWORD", "postgres"));

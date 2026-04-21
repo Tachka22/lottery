@@ -7,15 +7,17 @@ import org.lottery.model.enums.DrawStatus;
 
 import java.time.LocalDateTime;
 
-@Data                // Генерирует геттеры, сеттеры, equals, hashCode и toString
-@NoArgsConstructor   // Пустой конструктор
-@AllArgsConstructor  // Конструктор со всеми полями
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Draw {
     private int id;
     private String name;
-    private String lotteryType;
+    private String lotteryTypeName;
     private DrawStatus status;
-    private String winningCombination;
+    private String winningNumbers;
+    private Integer winningBonus;
     private LocalDateTime createdAt;
     private LocalDateTime finishedAt;
+    private String description;
 }

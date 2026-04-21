@@ -4,6 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import org.lottery.repository.DrawRepository;
 import org.lottery.repository.DrawRepositoryImpl;
+import org.lottery.repository.LotteryTypeRepository;
+import org.lottery.repository.LotteryTypeRepositoryImpl;
 import org.lottery.service.DrawService;
 import org.lottery.service.DrawServiceImpl;
 
@@ -19,5 +21,6 @@ public class LotteryModule extends AbstractModule {
 
         //repositories
         bind(DrawRepository.class).to(DrawRepositoryImpl.class).in(Scopes.SINGLETON);
+        bind(LotteryTypeRepository.class).to(LotteryTypeRepositoryImpl.class).in(Scopes.SINGLETON);
     }
 }

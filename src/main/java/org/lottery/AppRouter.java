@@ -17,6 +17,9 @@ public class AppRouter {
         path("/draws", () -> {
             post(drawController::createDraw);
             get(drawController::getAllDraws);
+            post("/{drawId}/start", drawController::startDraw);
+            post("/{drawId}/finish", drawController::finishDraw);
+            post("/{drawId}/cancel", drawController::cancelDraw);
         });
     }
 }
