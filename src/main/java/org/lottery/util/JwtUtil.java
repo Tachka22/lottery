@@ -8,7 +8,15 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 public class JwtUtil {
-    // Секретный ключ — вынести в переменную окружения в реальном проекте
+    /**
+     * Секретный ключ для подписи JWT токенов.
+     * Берeтся из переменной окружения JWT_SECRET.
+     * Если переменная не задана — используется дефолтный ключ для локальной разработки.
+     * Для запуска в Docker добавить в docker-compose.yml:
+     *   app:
+     *     environment:
+     *       JWT_SECRET: "твой-секретный-ключ-минимум-32-символа" (сгененрировать ключ не менее 32 символов)
+     */
     private static final String SECRET = System.getenv().getOrDefault("JWT_SECRET", "dev-secret-key-must-be-long-enough-32chars");
     private static final long EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 часа
 
