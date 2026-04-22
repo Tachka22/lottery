@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Guice;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
+import org.lottery.config.DatabaseConfig;
 import org.lottery.config.LotteryModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ public class Main {
     private static final int PORT = 8080;
 
     public static void main(String[] args) {
-        //DatabaseConfig.runMigrations();
+        DatabaseConfig.runMigrations();
 
         //Настройка DI
         var injector = Guice.createInjector(new LotteryModule());
