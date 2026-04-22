@@ -2,6 +2,7 @@ package org.lottery.config;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.flywaydb.core.Flyway;
 
 import javax.sql.DataSource;
 
@@ -20,11 +21,11 @@ public class DatabaseConfig {
         return dataSource;
     }
 
-//    public static void runMigrations() {
-//        var flyway = Flyway.configure()
-//                .dataSource(getDataSource())
-//                .locations("db/migration")
-//                .load();
-//        flyway.migrate();
-//    }
+    public static void runMigrations() {
+      var flyway = Flyway.configure()
+               .dataSource(getDataSource())
+               .locations("db/migration")
+               .load();
+        flyway.migrate();
+        }
 }

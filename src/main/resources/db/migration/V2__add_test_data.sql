@@ -5,9 +5,9 @@ INSERT INTO lottery_types (name, numbers_count, min_number, max_number, has_bonu
     ('KENO',    10,1, 80, FALSE, NULL, NULL, 'Кено: выбери 10 чисел из 80')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO users (email, username, password, role) VALUES
-    ('admin@lottery.com', 'admin', '$2a$10$8Z2q5q9qLqLqLqLqLqLqLqOqOqOqOqOqOqOqOqOqOqOqO', 'ADMIN'),
-    ('user@lottery.com',  'user',  '$2a$10$8Z2q5q9qLqLqLqLqLqLqLqOqOqOqOqOqOqOqOqOqOqOqO', 'USER')
+INSERT INTO users (email, password, role) VALUES
+    ('admin@lottery.com', '100000:x8bnyBeJeormnmUEdqd2WA==:LjZxSMa3zp0V5QeGBVa6DWzCRsQCNgrNCPFteDJH5V4=', 'ADMIN'),
+    ('user@lottery.com', '100000:6IJcvY1UxjBdhT14+6HbQw==:uTgsTdJ+NrnFt4aCKd9UDxPZNiPzTk/j67ToXR0WDJQ=', 'USER')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO draws (name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description) VALUES
