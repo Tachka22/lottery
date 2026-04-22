@@ -1,26 +1,37 @@
 package org.lottery.config;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
-import org.lottery.repository.DrawRepository;
-import org.lottery.repository.DrawRepositoryImpl;
-import org.lottery.repository.LotteryTypeRepository;
-import org.lottery.repository.LotteryTypeRepositoryImpl;
+import org.lottery.controller.AuthController;
+import org.lottery.controller.DrawController;
+import org.lottery.controller.TicketController;
+import org.lottery.model.repository.*;
+import org.lottery.service.AuthService;
 import org.lottery.service.DrawService;
-import org.lottery.service.DrawServiceImpl;
+import org.lottery.service.TicketService;
 
-import javax.sql.DataSource;
+public class LotteryModule {
 
-public class LotteryModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(DataSource.class).toInstance(DatabaseConfig.getDataSource());
+    private final DrawController drawController;
+    private final TicketController ticketController;
+    private final AuthController authController;
 
-        //services
-        bind(DrawService.class).to(DrawServiceImpl.class).in(Scopes.SINGLETON);
+    public LotteryModule(DatabaseConfig dbConfig) {
+        // Репозитории
+        UserRepository userRepository = new UserRepositoryImpl(dbConfig);
+        DrawRepository drawRepository = new DrawRepositoryImpl(dbConfig);
+        TicketRepository ticketRepository = new TicketRepositoryImpl(dbConfig);
 
-        //repositories
-        bind(DrawRepository.class).to(DrawRepositoryImpl.class).in(Scopes.SINGLETON);
-        bind(LotteryTypeRepository.class).to(LotteryTypeRepositoryImpl.class).in(Scopes.SINGLETON);
+        // Сервисы
+        AuthService authService = new AuthService(userRepository);
+        DrawService drawService = new DrawService(drawRepository);
+        TicketService ticketService = new TicketService(ticketRepository);
+
+        // Контроллеры
+        this.drawController = new DrawController(drawService);
+        this.ticketController = new TicketController(authService, drawService, ticketService);
+        this.authController = new AuthController(authService);
     }
+
+    public DrawController getDrawController() { return drawController; }
+    public TicketController getTicketController() { return ticketController; }
+    public AuthController getAuthController() { return authController; }
 }
