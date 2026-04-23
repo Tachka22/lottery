@@ -1,6 +1,8 @@
 package org.lottery.service;
 
 import com.google.inject.Inject;
+import io.javalin.http.BadRequestResponse;
+import io.javalin.http.UnauthorizedResponse;
 import org.lottery.dto.response.AuthResponse;
 import org.lottery.model.User;
 import org.lottery.model.enums.Role;
@@ -22,7 +24,7 @@ public class AuthServiceImpl implements AuthService {
         validatePassword(password);
 
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Пользователь с таким email уже существует");
+            throw new BadRequestResponse("Пользователь с таким email уже существует");
         }
 
         User user = new User();
@@ -42,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByEmail(email);
         if (user == null || !PasswordUtil.verifyPassword(password, user.getPassword())) {
-            throw new IllegalArgumentException("Неверный email или пароль");
+            throw new UnauthorizedResponse("Неверный email или пароль");
         }
 
         String token = JwtUtil.generateToken((long) user.getId(), user.getRole().name());
@@ -51,19 +53,19 @@ public class AuthServiceImpl implements AuthService {
 
     private void validateEmail(String email) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email не может быть пустым");
+            throw new BadRequestResponse("Email не может быть пустым");
         }
         if (!email.contains("@")) {
-            throw new IllegalArgumentException("Некорректный email");
+            throw new BadRequestResponse("Некорректный email");
         }
     }
 
     private void validatePassword(String password) {
         if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Пароль не может быть пустым");
+            throw new BadRequestResponse("Пароль не может быть пустым");
         }
         if (password.length() < 4) {
-            throw new IllegalArgumentException("Пароль должен быть не менее 4 символов");
+            throw new BadRequestResponse("Пароль должен быть не менее 4 символов");
         }
     }
 }
