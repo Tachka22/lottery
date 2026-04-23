@@ -23,7 +23,7 @@ public class AuthMiddleware {
     }
 
     // Достаёт userId из токена
-    public static Long getCurrentUserId(Context ctx) {
+    public static Integer getCurrentUserId(Context ctx) {
         String token = extractToken(ctx);
         if (token == null || !JwtUtil.isValid(token)) {
             throw new UnauthorizedResponse("Токен отсутствует или недействителен");

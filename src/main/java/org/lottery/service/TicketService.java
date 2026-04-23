@@ -7,5 +7,5 @@ import org.lottery.model.Ticket;
 public interface TicketService {
   TicketListResponse getUserTicketHistory(int userId, int limit, int offset);
   TicketResultResponse getTicketResult(int ticketId, int requestingUserId);
-  Ticket buyTicket(int drawId, long userId);
+  Ticket buyTicket(int drawId, int userId);
 }

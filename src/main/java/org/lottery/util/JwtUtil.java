@@ -43,8 +43,8 @@ public class JwtUtil {
     }
 
     // Удобные методы для остальных разработчиков
-    public static Long getUserId(String token) {
-        return Long.parseLong(parseToken(token).getSubject());
+    public static Integer getUserId(String token) {
+        return Integer.parseInt(parseToken(token).getSubject());
     }
 
     public static String getRole(String token) {

@@ -1,6 +1,7 @@
 package org.lottery.repository;
 
 import com.google.inject.Inject;
+import org.lottery.model.ParticipantNotificationInfo;
 import org.lottery.model.Ticket;
 import org.lottery.model.enums.TicketStatus;
 import javax.sql.DataSource;
@@ -177,6 +178,37 @@ public class TicketRepositoryImpl implements TicketRepository {
       throw new RuntimeException("Ошибка получение состояния комбинации билета", e);
     }
   }
+
+  @Override
+  public List<ParticipantNotificationInfo> findParticipantsByDrawId(int drawId) {
+    String sql = """
+        SELECT DISTINCT u.email, t.status 
+        FROM tickets t 
+        JOIN users u ON t.user_id = u.id 
+        WHERE t.draw_id = ?
+        """;
+
+    List<ParticipantNotificationInfo> result = new ArrayList<>();
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+      stmt.setInt(1, drawId);
+
+      try (ResultSet rs = stmt.executeQuery()) {
+        while (rs.next()) {
+          result.add(new ParticipantNotificationInfo(
+                  rs.getString("email"),
+                  rs.getString("status")
+          ));
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка при получении списка участников для рассылки", e);
+    }
+    return result;
+  }
+
 
   private Ticket mapRow(ResultSet rs) throws SQLException {
     Ticket t = new Ticket();

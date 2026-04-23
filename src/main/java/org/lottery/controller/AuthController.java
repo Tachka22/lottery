@@ -31,7 +31,7 @@ public class AuthController {
 
     public void verify(Context ctx) {
         AuthMiddleware.requireAuth(ctx);
-        Long userId = AuthMiddleware.getCurrentUserId(ctx);
+        Integer userId = AuthMiddleware.getCurrentUserId(ctx);
         String role = AuthMiddleware.getCurrentRole(ctx);
         ctx.status(200).json(Map.of(
                 "userId", userId,
