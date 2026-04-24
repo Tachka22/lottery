@@ -91,10 +91,6 @@ components:
       properties:
         winningCombination: { type: string }
         winners: { type: integer }
-    CancelDrawResponse:
-      type: object
-      properties:
-        message: { type: string }
     StartDrawResponse:
       type: object
       properties:
@@ -260,8 +256,8 @@ paths:
         '403': { description: Требуется роль ADMIN }
     get:
       tags: [ Admin (Draws) ]
-      summary: Получить все тиражи (без фильтрации и пагинации)
-      description: Возвращает полный список тиражей в виде массива. Для фильтрации используйте /draws/filter.
+      summary: Получить все тиражи
+      description: Возвращает полный список тиражей в виде массива.
       responses:
         '200':
           description: Список всех тиражей
@@ -302,54 +298,66 @@ paths:
 
   /draws/{drawId}/start:
     post:
-      tags: [Admin (Draws)]
-      summary: Начать тираж (перевести в ACTIVE)
+      tags: [ Admin (Draws) ]
+      summary: Запустить тираж (перевод из DRAFT в ACTIVE)
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
       responses:
         '200':
-          description: Тираж активирован
+          description: Тираж запущен
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/StartDrawResponse' }
-        '400': { description: Невозможно начать (не DRAFT) }
+              schema: { $ref: '#/components/schemas/Draw' }
+        '400':
+          description: Тираж уже запущен или завершён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '403': { description: Требуется роль ADMIN }
 
   /draws/{drawId}/finish:
     post:
-      tags: [Admin (Draws)]
-      summary: Завершить тираж, сгенерировать выигрышную комбинацию и определить победителей
+      tags: [ Admin (Draws) ]
+      summary: Завершить тираж (генерация чисел и выбор победителей)
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
       responses:
         '200':
-          description: Тираж завершён
+          description: Тираж успешно завершён
           content:
             application/json:
               schema: { $ref: '#/components/schemas/FinishDrawResponse' }
-        '400': { description: Тираж не ACTIVE }
+        '400':
+          description: Только активный тираж может быть завершён
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '403': { description: Требуется роль ADMIN }
 
   /draws/{drawId}/cancel:
     post:
-      tags: [Admin (Draws)]
-      summary: Отменить тираж (статус CANCELLED, все билеты → LOSE)
+      tags: [ Admin (Draws) ]
+      summary: Отменить тираж
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer }
+          schema: { type: integer, minimum: 1 }
       responses:
         '200':
           description: Тираж отменён
+        '400':
+          description: Нельзя отменить уже завершённый тираж
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/CancelDrawResponse' }
-        '400': { description: Нельзя отменить (уже FINISHED или CANCELLED) }
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '403': { description: Требуется роль ADMIN }
 
   /draws/completed:
     get:
@@ -368,6 +376,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DrawListResponse' }
+        '403': { description: Требуется роль ADMIN }
+
+  /draws/{drawId}:
+    get:
+      tags: [ Admin (Draws), Draws (User) ]
+      summary: Получить информацию о тираже
+      parameters:
+        - name: drawId
+          in: path
+          required: true
+          description: Уникальный идентификатор тиража
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Данные тиража
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draw' }
+        '404':
+          description: Тираж с таким ID не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '400':
+          description: Некорректный формат ID
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
 
   # ---------- Отчёты (только ADMIN для отчётов по тиражам, USER для своих билетов) ----------
   /reports/draws/{drawId}:

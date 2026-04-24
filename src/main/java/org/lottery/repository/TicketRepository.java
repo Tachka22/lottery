@@ -9,4 +9,6 @@ public interface TicketRepository {
   List<Ticket> findAllByUserId(int userId, int limit, int offset);
   int countByUserId(int userId);
   List<Ticket> findAllByDrawId(int drawId);
+  int markWinners(int drawId, String winningNumbers, Integer winningBonus);
+  int cancelTickets(int drawId);
 }

@@ -20,7 +20,7 @@ public class DrawRepositoryImpl implements DrawRepository {
 
     @Override
     public Draw save(Draw draw) {
-        var sql = "INSERT INTO draws (name, lottery_type_name, status, created_at) VALUES (?, ?, ?, ?)";
+        var sql = "INSERT INTO draws (name, lottery_type_name, status, created_at, description) VALUES (?, ?, ?, ?,?)";
 
         try (Connection conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -29,6 +29,7 @@ public class DrawRepositoryImpl implements DrawRepository {
             stmt.setString(2, draw.getLotteryTypeName());
             stmt.setString(3, draw.getStatus().name());
             stmt.setTimestamp(4, Timestamp.valueOf(draw.getCreatedAt()));
+            stmt.setString(5, draw.getDescription());
 
             stmt.executeUpdate();
 
@@ -40,13 +41,13 @@ public class DrawRepositoryImpl implements DrawRepository {
 
             return draw;
         } catch (SQLException e) {
-            throw new RuntimeException("Database error during save", e);
+            throw new RuntimeException("Ошибка сохранения тиража", e);
         }
     }
 
     @Override
     public List<Draw> findAll() {
-        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at FROM draws ORDER BY id DESC";
+        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description FROM draws ORDER BY id DESC";
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             var rs = stmt.executeQuery();
@@ -56,13 +57,14 @@ public class DrawRepositoryImpl implements DrawRepository {
             }
             return draws;
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to get all draws", e);
+            throw new RuntimeException("Ошибка получения всех тиражей", e);
         }
     }
 
+
     @Override
     public Optional<Draw> findById(int id) {
-        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at FROM draws WHERE id = ?";
+        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description FROM draws WHERE id = ?";
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -72,13 +74,16 @@ public class DrawRepositoryImpl implements DrawRepository {
             }
             return Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find draw by id", e);
+            throw new RuntimeException("Ошибка получения тиража по id", e);
         }
     }
 
     @Override
     public void update(Draw draw) {
-        var sql = "UPDATE draws SET name = ?, lottery_type_name = ?, status = ?, winning_numbers = ?, winning_bonus = ?, finished_at = ? WHERE id = ?";
+        var sql =   """
+                    UPDATE draws SET name = ?, lottery_type_name = ?, status = ?, winning_numbers = ?,
+                    winning_bonus = ?, finished_at = ?, description = ? WHERE id = ?
+                    """;
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, draw.getName());
@@ -92,10 +97,11 @@ public class DrawRepositoryImpl implements DrawRepository {
                 stmt.setNull(5, Types.INTEGER);
 
             stmt.setTimestamp(6, draw.getFinishedAt() != null ? Timestamp.valueOf(draw.getFinishedAt()) : null);
-            stmt.setInt(7, draw.getId());
+            stmt.setString(7, draw.getDescription());
+            stmt.setInt(8, draw.getId());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update draw", e);
+            throw new RuntimeException("Ошибка обновления тиража", e);
         }
     }
 
@@ -116,7 +122,12 @@ public class DrawRepositoryImpl implements DrawRepository {
             draw.setWinningBonus(winningBonus);
         }
 
-        draw.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+        Timestamp createdAt = rs.getTimestamp("created_at");
+        if (createdAt != null) {
+            draw.setCreatedAt(createdAt.toLocalDateTime());
+        }
+        draw.setDescription(rs.getString("description"));
+
         var finishedAt = rs.getTimestamp("finished_at");
         if (finishedAt != null) {
             draw.setFinishedAt(finishedAt.toLocalDateTime());

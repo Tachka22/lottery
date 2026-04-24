@@ -32,11 +32,31 @@ public class AppRouter {
         });
 
         path("/draws", () -> {
-            post(drawController::createDraw);
-            get(drawController::getAllDraws);
-            post("/{drawId}/start", drawController::startDraw);
-            post("/{drawId}/finish", drawController::finishDraw);
-            post("/{drawId}/cancel", drawController::cancelDraw);
+            get(ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getAllDraws(ctx);
+            });
+            get("/{drawId}", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getDraw(ctx);
+            });
+
+            post(ctx -> {
+                AuthMiddleware.requireAdmin(ctx);
+                drawController.createDraw(ctx);
+            });
+            post("/{drawId}/start", ctx -> {
+                AuthMiddleware.requireAdmin(ctx);
+                drawController.startDraw(ctx);
+            });
+            post("/{drawId}/finish", ctx -> {
+                AuthMiddleware.requireAdmin(ctx);
+                drawController.finishDraw(ctx);
+            });
+            post("/{drawId}/cancel", ctx -> {
+                AuthMiddleware.requireAdmin(ctx);
+                drawController.cancelDraw(ctx);
+            });
         });
 
         path("/tickets", () -> {
