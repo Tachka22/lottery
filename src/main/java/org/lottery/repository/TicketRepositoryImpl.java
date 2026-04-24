@@ -79,6 +79,56 @@ public class TicketRepositoryImpl implements TicketRepository {
     return result;
   }
 
+  @Override
+  public int markWinners(int drawId, String winningNumbers, Integer winningBonus) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
+      int winners = 0;
+
+      var winSql = "UPDATE tickets SET status = 'WIN' WHERE draw_id = ? AND numbers = ?";
+      if (winningBonus != null) {
+        winSql += " AND bonus = ?";
+      } else {
+        winSql += " AND bonus IS NULL";
+      }
+
+      try (var stmt = conn.prepareStatement(winSql)) {
+        stmt.setInt(1, drawId);
+        stmt.setString(2, winningNumbers);
+        if (winningBonus != null)
+          stmt.setInt(3, winningBonus);
+
+        winners = stmt.executeUpdate();
+      }
+
+      var loseSql = "UPDATE tickets SET status = 'LOSE' WHERE draw_id = ? AND status = 'PENDING'";
+      try (var stmt = conn.prepareStatement(loseSql)) {
+        stmt.setInt(1, drawId);
+        stmt.executeUpdate();
+      }
+
+      conn.commit();
+
+      return winners;
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка установки результата билетов для тиража: " + drawId, e);
+    }
+  }
+
+  @Override
+  public int cancelTickets(int drawId) {
+    var sql = "UPDATE tickets SET status = 'LOSE' WHERE draw_id = ? AND status != 'LOSE'";
+    try (var conn = dataSource.getConnection();
+         var stmt = conn.prepareStatement(sql)) {
+
+      stmt.setInt(1, drawId);
+      int updated = stmt.executeUpdate();
+
+      return updated;
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка отмены билетов для тиража: " + drawId, e);
+    }
+  }
   private Ticket mapRow(ResultSet rs) throws SQLException {
     Ticket t = new Ticket();
     t.setId(rs.getInt("id"));

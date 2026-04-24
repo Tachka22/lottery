@@ -1,9 +1,14 @@
 package org.lottery.repository;
 
 import com.google.inject.Inject;
+import org.lottery.model.LotteryType;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class LotteryTypeRepositoryImpl implements LotteryTypeRepository {
     private final DataSource dataSource;
@@ -15,7 +20,9 @@ public class LotteryTypeRepositoryImpl implements LotteryTypeRepository {
 
     @Override
     public boolean existsByName(String name) {
-        var sql = "SELECT 1 FROM lottery_types WHERE name = ?";
+        var sql = """
+                SELECT 1 FROM lottery_types WHERE name = ?
+                """;
         try (var conn = dataSource.getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
@@ -23,7 +30,38 @@ public class LotteryTypeRepositoryImpl implements LotteryTypeRepository {
                 return rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check lottery type existence", e);
+            throw new RuntimeException("Ошибка проверки существования типа лотереи", e);
         }
     }
+
+    @Override
+    public Optional<LotteryType> findByName(String name) {
+        String sql = """
+                    SELECT name, numbers_count, min_number, max_number, has_bonus, bonus_min, bonus_max, description 
+                    FROM lottery_types WHERE name = ?
+                    """;
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, name);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    LotteryType type = new LotteryType();
+                    type.setName(rs.getString("name"));
+                    type.setNumbersCount(rs.getInt("numbers_count"));
+                    type.setMinNumber(rs.getInt("min_number"));
+                    type.setMaxNumber(rs.getInt("max_number"));
+                    type.setHasBonus(rs.getBoolean("has_bonus"));
+                    type.setBonusMin(rs.getInt("bonus_min"));
+                    type.setBonusMax(rs.getInt("bonus_max"));
+                    type.setDescription(rs.getString("description"));
+
+                    return Optional.of(type);
+                }
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка получения лотереи по имени: " + name, e);
+        }
+    }
+
 }
