@@ -1,10 +1,7 @@
 package org.lottery;
 
 import com.google.inject.Inject;
-import org.lottery.controller.AuthController;
-import org.lottery.controller.DrawController;
-import org.lottery.controller.ReportController;
-import org.lottery.controller.TicketController;
+import org.lottery.controller.*;
 import org.lottery.util.AuthMiddleware;
 
 import static io.javalin.apibuilder.ApiBuilder.*;
@@ -14,14 +11,17 @@ public class AppRouter {
     private final AuthController authController;
     private final TicketController ticketController;
     private final ReportController reportController;
+    private final LotteryTypeController lotteryTypeController;
 
     @Inject
     public AppRouter(DrawController drawController, AuthController authController,
-                     TicketController ticketController, ReportController reportController) {
+                     TicketController ticketController, ReportController reportController,
+                     LotteryTypeController lotteryTypeController) {
         this.drawController = drawController;
         this.authController = authController;
         this.ticketController = ticketController;
         this.reportController = reportController;
+        this.lotteryTypeController = lotteryTypeController;
     }
 
     public void registerRoutes() {
@@ -80,5 +80,18 @@ public class AppRouter {
               reportController.getUserTicketsReport(ctx);
             });
         });
+
+        path("/lottery-types", () -> {
+            get(ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                lotteryTypeController.getAll(ctx);
+            });
+
+            post(ctx -> {
+                AuthMiddleware.requireAdmin(ctx);
+                lotteryTypeController.create(ctx);
+            });
+        });
+
     }
 }
