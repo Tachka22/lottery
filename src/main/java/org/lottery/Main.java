@@ -8,6 +8,7 @@ import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 import org.lottery.config.LotteryModule;
 import org.lottery.dto.response.ErrorResponse;
+import org.lottery.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,5 +71,12 @@ public class Main {
 
 
         logger.info("Server started at PORT:{}", PORT);
+
+        app.events(event -> {
+            event.serverStopped(() -> {
+                var audit = injector.getInstance(AuditService.class);
+                audit.shutdown();
+            });
+        });
     }
 }
