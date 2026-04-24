@@ -1,58 +1,34 @@
 package org.lottery.controller;
 
-import org.lottery.model.Draw;
+import com.google.inject.Inject;
+import io.javalin.http.Context;
 import org.lottery.service.DrawService;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class DrawController implements HttpHandler {
+public class DrawController {
 
     private final DrawService drawService;
 
+    @Inject
     public DrawController(DrawService drawService) {
         this.drawService = drawService;
     }
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        if ("GET".equals(exchange.getRequestMethod()) &&
-                exchange.getRequestURI().getPath().equals("/draws/active")) {
+    /**
+     * GET /draws/active - список активных тиражей
+     */
+    public void getActiveDraws(Context ctx) {
+        List<DrawResponse> draws = drawService.getActiveDraws().stream()
+                .map(draw -> new DrawResponse(
+                        draw.getId(),
+                        draw.getName(),
+                        draw.getLotteryTypeName(),
+                        draw.getStatus()
+                ))
+                .collect(Collectors.toList());
 
-            List<Draw> draws = drawService.getActiveDraws();
-            String json = convertDrawsToJson(draws);
-
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, json.getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(json.getBytes());
-            os.close();
-        } else {
-            exchange.sendResponseHeaders(404, -1);
-        }
-    }
-
-    private String convertDrawsToJson(List<Draw> draws) {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < draws.size(); i++) {
-            Draw d = draws.get(i);
-            sb.append("{")
-                    .append("\"id\":").append(d.getId()).append(",")
-                    .append("\"name\":\"").append(escapeJson(d.getName())).append("\",")
-                    .append("\"lotteryType\":\"").append(d.getLotteryTypeName()).append("\",")
-                    .append("\"status\":\"").append(d.getStatus()).append("\"")
-                    .append("}");
-            if (i < draws.size() - 1) sb.append(",");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    private String escapeJson(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        ctx.status(200).json(draws);
     }
 }

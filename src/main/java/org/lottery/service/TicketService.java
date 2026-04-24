@@ -1,41 +1,59 @@
 package org.lottery.service;
 
+import com.google.inject.Inject;
 import org.lottery.model.Draw;
 import org.lottery.model.Ticket;
-import org.lottery.model.User;
-import org.lottery.repository.TicketRepository;
+import org.lottery.model.repository.DrawRepository;
+import org.lottery.model.repository.TicketRepository;
 
 public class TicketService {
 
     private final TicketRepository ticketRepository;
+    private final DrawRepository drawRepository;
+    private final NumberGeneratorService numberGenerator;
 
-    public TicketService(TicketRepository ticketRepository) {
+    @Inject
+    public TicketService(TicketRepository ticketRepository,
+                         DrawRepository drawRepository,
+                         NumberGeneratorService numberGenerator) {
         this.ticketRepository = ticketRepository;
+        this.drawRepository = drawRepository;
+        this.numberGenerator = numberGenerator;
     }
 
     /**
-     * Покупка билета
+     * Покупка билета (числа генерируются на сервере)
      */
-    public Ticket purchaseTicket(Draw draw, User user, String numbers, Integer bonus) {
+    public Ticket purchaseTicket(int drawId, long userId) {
+        // 1. Получаем тираж
+        Draw draw = drawRepository.findById(drawId);
+        if (draw == null) {
+            throw new IllegalArgumentException("Тираж не найден");
+        }
 
-        // Проверка: тираж должен быть активным
+        // 2. Проверяем, активен ли тираж
         if (!"ACTIVE".equals(draw.getStatus())) {
-            throw new IllegalArgumentException("Тираж не активен. Текущий статус: " + draw.getStatus());
+            throw new IllegalStateException("Тираж не активен");
         }
 
-        // Проверка: такая комбинация чисел уже существует
-        if (ticketRepository.existsByDrawIdAndNumbers(draw.getId(), numbers)) {
-            throw new IllegalStateException("Такая комбинация чисел уже занята в этом тираже");
+        // 3. Генерируем комбинацию чисел на сервере
+        String numbers = numberGenerator.generateNumbers(draw.getLotteryTypeName());
+
+        // 4. Генерируем бонус (для MEGA лотереи)
+        Integer bonus = null;
+        if ("MEGA".equals(draw.getLotteryTypeName())) {
+            bonus = numberGenerator.generateBonus();
         }
 
-        // Создаём билет
+        // 5. Создаём билет
         Ticket ticket = new Ticket();
-        ticket.setDrawId(draw.getId());
-        ticket.setUserId(user.getId());
+        ticket.setDrawId(drawId);
+        ticket.setUserId((int) userId);
         ticket.setNumbers(numbers);
         ticket.setBonus(bonus);
         ticket.setStatus("PENDING");
 
+        // 6. Сохраняем
         return ticketRepository.save(ticket);
     }
 }

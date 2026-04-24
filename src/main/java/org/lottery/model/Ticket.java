@@ -2,38 +2,42 @@ package org.lottery.model;
 
 import java.time.LocalDateTime;
 
-public class Draw {
+public class Ticket {
     private int id;
-    private String name;
-    private String lotteryTypeName;
+    private int drawId;
+    private int userId;
+    private String numbers;
+    private Integer bonus;
     private String status;
-    private String winningNumbers;
-    private Integer winningBonus;
     private LocalDateTime createdAt;
-    private LocalDateTime finishedAt;
-    private String description;
 
-    public Draw() {}
+    public Ticket() {}
+
+    public Ticket(int id, int drawId, int userId, String numbers, Integer bonus, String status, LocalDateTime createdAt) {
+        this.id = id;
+        this.drawId = drawId;
+        this.userId = userId;
+        this.numbers = numbers;
+        this.bonus = bonus;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
 
     // Геттеры
     public int getId() { return id; }
-    public String getName() { return name; }
-    public String getLotteryTypeName() { return lotteryTypeName; }
+    public int getDrawId() { return drawId; }
+    public int getUserId() { return userId; }
+    public String getNumbers() { return numbers; }
+    public Integer getBonus() { return bonus; }
     public String getStatus() { return status; }
-    public String getWinningNumbers() { return winningNumbers; }
-    public Integer getWinningBonus() { return winningBonus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getFinishedAt() { return finishedAt; }
-    public String getDescription() { return description; }
 
     // Сеттеры
     public void setId(int id) { this.id = id; }
-    public void setName(String name) { this.name = name; }
-    public void setLotteryTypeName(String lotteryTypeName) { this.lotteryTypeName = lotteryTypeName; }
+    public void setDrawId(int drawId) { this.drawId = drawId; }
+    public void setUserId(int userId) { this.userId = userId; }
+    public void setNumbers(String numbers) { this.numbers = numbers; }
+    public void setBonus(Integer bonus) { this.bonus = bonus; }
     public void setStatus(String status) { this.status = status; }
-    public void setWinningNumbers(String winningNumbers) { this.winningNumbers = winningNumbers; }
-    public void setWinningBonus(Integer winningBonus) { this.winningBonus = winningBonus; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public void setFinishedAt(LocalDateTime finishedAt) { this.finishedAt = finishedAt; }
-    public void setDescription(String description) { this.description = description; }
 }

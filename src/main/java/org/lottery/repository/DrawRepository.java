@@ -1,13 +1,13 @@
-package org.lottery.repository;
+package org.lottery.model.repository;
 
 import org.lottery.model.Draw;
-
 import java.util.List;
-import java.util.Optional;
 
 public interface DrawRepository {
-    Draw save(Draw draw);
-    List<Draw> findAll();
-    Optional<Draw> findById(int id);
-    void update(Draw draw);
+
+    // Получить все активные тиражи
+    List<Draw> findActiveDraws();
+
+    // Найти тираж по ID
+    Draw findById(int id);
 }

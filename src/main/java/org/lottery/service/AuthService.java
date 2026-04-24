@@ -1,67 +1,49 @@
 package org.lottery.service;
 
+import com.google.inject.Inject;
 import org.lottery.model.User;
 import org.lottery.model.repository.UserRepository;
+
+import java.util.UUID;
 
 public class AuthService {
 
     private final UserRepository userRepository;
 
+    @Inject
     public AuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Проверка токена и получение пользователя
-     */
-    public User authenticate(String token) {
-        if (token == null || token.isEmpty()) {
-            return null;
+    public AuthResponse register(String email, String password) {
+        // Проверка существования пользователя
+        if (userRepository.findByEmail(email) != null) {
+            throw new RuntimeException("Пользователь уже существует");
         }
-        return userRepository.findByToken(token);
-    }
 
-    /**
-     * Поиск пользователя по email
-     */
-    public User findByEmail(String email) {
-        if (email == null || email.isEmpty()) {
-            return null;
-        }
-        return userRepository.findByEmail(email);
-    }
-
-    /**
-     * Регистрация нового пользователя
-     */
-    public User register(String email, String password, String token) {
+        // Создание нового пользователя
+        String token = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail(email);
-        user.setPassword(password);
+        user.setPassword(password); // TODO: хэшировать пароль
         user.setToken(token);
         user.setRole("USER");
 
-        return userRepository.save(user);
+        userRepository.save(user);
+        return new AuthResponse(token);
     }
 
-    /**
-     * Вход пользователя
-     */
-    public String login(String email, String password) {
+    public AuthResponse login(String email, String password) {
         User user = userRepository.findByEmail(email);
 
-        if (user == null) {
-            return null;
+        if (user == null || !password.equals(user.getPassword())) {
+            throw new RuntimeException("Неверный email или пароль");
         }
 
-        if (!password.equals(user.getPassword())) {
-            return null;
-        }
-
-        // Генерируем новый токен
-        String newToken = java.util.UUID.randomUUID().toString();
+        // Генерация нового токена
+        String newToken = UUID.randomUUID().toString();
         userRepository.updateToken(user.getId(), newToken);
 
-        return newToken;
+        return new AuthResponse(newToken);
     }
 }
