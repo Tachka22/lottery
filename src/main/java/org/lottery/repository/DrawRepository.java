@@ -10,4 +10,5 @@ public interface DrawRepository {
     List<Draw> findAll();
     Optional<Draw> findById(int id);
     void update(Draw draw);
+    Optional<Draw> findByName(String name);
 }

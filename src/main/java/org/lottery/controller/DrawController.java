@@ -5,7 +5,7 @@ import io.javalin.http.Context;
 import org.lottery.dto.request.DrawCreateRequest;
 import org.lottery.service.DrawService;
 
-import java.util.Map;
+import java.net.URLDecoder;
 
 public class DrawController {
     private final DrawService drawService;
@@ -51,6 +51,19 @@ public class DrawController {
     public void getDraw(Context ctx) {
         int id = getValidId(ctx);
         var draw = drawService.getDraw(id);
+        ctx.status(200).json(draw);
+    }
+
+    public void getDrawByName(Context ctx) {
+        String name = ctx.queryParam("name");
+
+        if (name == null || name.isBlank()) {
+            ctx.status(400).result("Нужно указать имя: ?name=...");
+            return;
+        }
+
+        String decodedName = URLDecoder.decode(name);
+        var draw = drawService.getDrawByName(decodedName);
         ctx.status(200).json(draw);
     }
 

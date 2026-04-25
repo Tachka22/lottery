@@ -407,6 +407,34 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  /draws/where:
+    get:
+      tags: [ Admin (Draws), Draws (User) ]
+      summary: Найти тираж по имени
+      description: Поиск тиража с использованием query-параметра name. Требуется авторизация.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Имя тиража (можно использовать кириллицу и пробелы)
+          schema:
+            type: string
+            minLength: 1
+          example: "Новогодний розыгрыш 2025"
+      responses:
+        '200':
+          description: Тираж найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draw'
+        '401':
+          description: Не авторизован
+        '404':
+          description: Тираж с таким именем не найден
+        '400':
+          description: Не передан параметр name
+
 
   # ---------- Отчёты (только ADMIN для отчётов по тиражам, USER для своих билетов) ----------
   /reports/draws/{drawId}:

@@ -14,4 +14,5 @@ public interface DrawService {
     FinishDrawResponse finishDraw(int drawId);
     void cancelDraw(int drawId);
     Draw getDraw(int drawId);
+    Draw getDrawByName(String name);
 }
