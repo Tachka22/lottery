@@ -61,6 +61,7 @@ public class Main {
         }).exception(Exception.class, (e, ctx) -> {
             logger.error("Internal Server Error: ", e);
             ctx.status(500).json(new ErrorResponse(500, "Внутренняя ошибка сервера"));
+
         });
 
         app.error(404, ctx -> {

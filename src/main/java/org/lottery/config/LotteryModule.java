@@ -3,14 +3,7 @@ package org.lottery.config;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import org.lottery.repository.*;
-import org.lottery.service.AuthService;
-import org.lottery.service.AuthServiceImpl;
-import org.lottery.service.DrawService;
-import org.lottery.service.DrawServiceImpl;
-import org.lottery.service.TicketService;
-import org.lottery.service.TicketServiceImpl;
-import org.lottery.service.ReportService;
-import org.lottery.service.ReportServiceImpl;
+import org.lottery.service.*;
 
 import javax.sql.DataSource;
 
@@ -24,6 +17,7 @@ public class LotteryModule extends AbstractModule {
         bind(AuthService.class).to(AuthServiceImpl.class).in(Scopes.SINGLETON);
         bind(TicketService.class).to(TicketServiceImpl.class).in(Scopes.SINGLETON);
         bind(ReportService.class).to(ReportServiceImpl.class).in(Scopes.SINGLETON);
+        bind(LotteryTypeService.class).to(LotteryTypeServiceImpl.class).in(Scopes.SINGLETON);
 
         //repositories
         bind(DrawRepository.class).to(DrawRepositoryImpl.class).in(Scopes.SINGLETON);

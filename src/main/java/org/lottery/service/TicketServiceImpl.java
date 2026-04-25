@@ -7,6 +7,7 @@ import org.lottery.dto.response.TicketListResponse;
 import org.lottery.dto.response.TicketResultResponse;
 import org.lottery.model.Draw;
 import org.lottery.model.Ticket;
+import org.lottery.model.enums.TicketStatus;
 import org.lottery.repository.DrawRepository;
 import org.lottery.repository.TicketRepository;
 import java.util.List;
@@ -43,7 +44,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     String winningCombo = null;
-    if (ticket.getStatus() != org.lottery.model.enums.TicketStatus.PENDING) {
+    if (ticket.getStatus() != TicketStatus.PENDING) {
       Optional<Draw> drawOpt = drawRepository.findById(ticket.getDrawId());
       if (drawOpt.isPresent()) {
         winningCombo = drawOpt.get().getWinningNumbers();
