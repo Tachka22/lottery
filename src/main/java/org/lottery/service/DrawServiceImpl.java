@@ -120,6 +120,16 @@ public class DrawServiceImpl implements DrawService {
                 .orElseThrow(() -> new NotFoundException("Тираж с ID " + drawId + " не найден"));
     }
 
+    @Override
+    public Draw getDrawByName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Имя тиража не может быть пустым");
+        }
+
+        return drawRepository.findByName(name)
+                .orElseThrow(() -> new NotFoundException("Тираж с именем " + name + " не найден"));
+    }
+
     private String generateWinningNumbers(LotteryType type) {
         Set<Integer> numbers = new HashSet<>();
         int count = type.getNumbersCount();

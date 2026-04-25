@@ -36,11 +36,15 @@ public class AppRouter {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getAllDraws(ctx);
             });
+            get("/where", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getDrawByName(ctx);
+            });
+
             get("/{drawId}", ctx -> {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getDraw(ctx);
             });
-
             post(ctx -> {
                 AuthMiddleware.requireAdmin(ctx);
                 drawController.createDraw(ctx);

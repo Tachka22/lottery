@@ -105,6 +105,22 @@ public class DrawRepositoryImpl implements DrawRepository {
         }
     }
 
+    @Override
+    public Optional<Draw> findByName(String name) {
+        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description FROM draws WHERE name = ?";
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, name);
+            var rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapRowToDraw(rs));
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка получения тиража по имени", e);
+        }
+    }
+
     private Draw mapRowToDraw(ResultSet rs) throws SQLException {
         var draw = new Draw();
         draw.setId(rs.getInt("id"));
