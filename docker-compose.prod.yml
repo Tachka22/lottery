@@ -1,0 +1,29 @@
+services:
+  migrations-prod:
+    image: flyway/flyway:latest
+    command: "-url=jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_BASE_SCHEME:-lottery} -user=${DB_USER:-postgres} -password=${DB_PASSWORD:-postgres} -connectRetries=30 migrate"
+    volumes:
+      - ./src/main/resources/db/migration/:/flyway/sql
+
+  nginx:
+    image: nginx:stable-alpine-slim
+    container_name: nginx-reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/:/etc/nginx/:ro
+      - ./deploy/html:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+  app:
+    image: app-dev:test
+    container_name: app
+    env_file: ./deploy/.env
+    depends_on:
+      - migrations-prod
+    environment:
+      DB_URL: "jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_BASE_SCHEME:-lottery}"
+      DB_USER: "${DB_USER:-postgres}"
+      DB_PASSWORD: "${DB_PASSWORD:-postgres}"
+    restart: unless-stopped
