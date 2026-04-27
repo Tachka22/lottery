@@ -4,14 +4,18 @@ import com.google.inject.Inject;
 import io.javalin.http.Context;
 import org.lottery.dto.response.ErrorResponse;
 import org.lottery.repository.UserActionsService;
+import org.lottery.service.AuditService;
 import org.lottery.util.AuthMiddleware;
+
+import java.time.Instant;
+import java.util.Map;
 
 public class UserActionController {
 
     private final UserActionsService historyService;
 
     @Inject
-    public UserActionController(UserActionsService historyService) {
+    public UserActionController(UserActionsService historyService, AuditService auditService) {
         this.historyService = historyService;
     }
 

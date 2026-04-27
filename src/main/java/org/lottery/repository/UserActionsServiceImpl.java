@@ -2,6 +2,7 @@ package org.lottery.repository;
 
 import com.google.inject.Inject;
 import org.lottery.dto.response.UserActionResponse;
+import org.lottery.service.AuditService;
 
 import java.util.List;
 
