@@ -12,16 +12,19 @@ public class AppRouter {
     private final TicketController ticketController;
     private final ReportController reportController;
     private final LotteryTypeController lotteryTypeController;
+    private final UserActionController userActionController;
 
     @Inject
     public AppRouter(DrawController drawController, AuthController authController,
                      TicketController ticketController, ReportController reportController,
-                     LotteryTypeController lotteryTypeController) {
+                     LotteryTypeController lotteryTypeController,
+                     UserActionController userActionController) {
         this.drawController = drawController;
         this.authController = authController;
         this.ticketController = ticketController;
         this.reportController = reportController;
         this.lotteryTypeController = lotteryTypeController;
+        this.userActionController = userActionController;
     }
 
     public void registerRoutes() {
@@ -96,6 +99,11 @@ public class AppRouter {
                 lotteryTypeController.create(ctx);
             });
         });
+        get("users/{userId}/history", ctx -> {
+            AuthMiddleware.requireAuth(ctx);
+            userActionController.getUserHistory(ctx);
+        });
+
 
     }
 }

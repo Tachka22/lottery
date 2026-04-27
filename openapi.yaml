@@ -122,6 +122,20 @@ components:
         bonusMin: { type: integer, nullable: true }
         bonusMax: { type: integer, nullable: true }
         description: { type: string, nullable: true }
+    UserActionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        actionType:
+          type: string
+          example: "TICKET_PURCHASE"
+        details:
+          type: object
+          description: "Произвольный JSON объект с деталями действия"
+        createdAt:
+          type: string
+          format: date-time
 
 security:
   - bearerAuth: []
@@ -517,3 +531,25 @@ paths:
               schema: { $ref: '#/components/schemas/LotteryType' }
         '400': { description: Ошибка валидации или тип уже существует }
         '403': { description: Требуется роль ADMIN }
+
+  /users/{userId}/history:
+    get:
+      tags: [ Users ]
+      summary: История пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserActionResponse'
+        '403':
+          description: Доступ к чужой истории запрещен

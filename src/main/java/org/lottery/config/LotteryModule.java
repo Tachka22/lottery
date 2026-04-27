@@ -18,11 +18,13 @@ public class LotteryModule extends AbstractModule {
         bind(TicketService.class).to(TicketServiceImpl.class).in(Scopes.SINGLETON);
         bind(ReportService.class).to(ReportServiceImpl.class).in(Scopes.SINGLETON);
         bind(LotteryTypeService.class).to(LotteryTypeServiceImpl.class).in(Scopes.SINGLETON);
+        bind(UserActionsService.class).to(UserActionsServiceImpl.class).in(Scopes.SINGLETON);
 
         //repositories
         bind(DrawRepository.class).to(DrawRepositoryImpl.class).in(Scopes.SINGLETON);
         bind(LotteryTypeRepository.class).to(LotteryTypeRepositoryImpl.class).in(Scopes.SINGLETON);
         bind(UserRepository.class).to(UserRepositoryImpl.class).in(Scopes.SINGLETON);
         bind(TicketRepository.class).to(TicketRepositoryImpl.class).in(Scopes.SINGLETON);
+        bind(UserActionRepository.class).to(UserActionRepositoryImpl.class).in(Scopes.SINGLETON);
     }
 }
