@@ -2,7 +2,7 @@ package org.lottery.config;
 
 import com.google.inject.*;
 import com.google.inject.multibindings.Multibinder;
-import org.lottery.model.UserActionEvent;
+import org.lottery.model.Event;
 import org.lottery.repository.*;
 import org.lottery.service.*;
 
@@ -31,8 +31,8 @@ public class LotteryModule extends AbstractModule {
 
         //Audit
         bind(AuditService.class).asEagerSingleton();
-        Multibinder<Consumer<UserActionEvent>> binder = Multibinder.newSetBinder(binder(), new TypeLiteral<Consumer<UserActionEvent>>(){});
+        Multibinder<Consumer<Event>> binder = Multibinder.newSetBinder(binder(), new TypeLiteral<Consumer<Event>>(){});
 
-        binder.addBinding().to(DatabaseAuditListener.class);
+        binder.addBinding().to(UserActionsConsumer.class);
     }
 }
