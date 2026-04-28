@@ -179,19 +179,6 @@ paths:
         '401': { description: Неверные учётные данные }
 
   # ---------- Пользовательские операции ----------
-  /draws/active:
-    get:
-      tags: [Draws (User)]
-      summary: Список активных тиражей (статус ACTIVE)
-      responses:
-        '200':
-          description: Список
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Draw' }
-
   /draws/{drawId}/tickets:
     post:
       tags: [Tickets]

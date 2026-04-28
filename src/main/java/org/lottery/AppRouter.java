@@ -15,8 +15,10 @@ public class AppRouter {
     private final UserActionController userActionController;
 
     @Inject
-    public AppRouter(DrawController drawController, AuthController authController,
-                     TicketController ticketController, ReportController reportController,
+    public AppRouter(DrawController drawController,
+                     AuthController authController,
+                     TicketController ticketController,
+                     ReportController reportController,
                      LotteryTypeController lotteryTypeController,
                      UserActionController userActionController) {
         this.drawController = drawController;
@@ -39,11 +41,18 @@ public class AppRouter {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getAllDraws(ctx);
             });
+            get("/completed", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getCompletedDraws(ctx);
+            });
+            get("/filter", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getDrawByFilter(ctx);
+            });
             get("/where", ctx -> {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getDrawByName(ctx);
             });
-
             get("/{drawId}", ctx -> {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getDraw(ctx);
@@ -93,17 +102,15 @@ public class AppRouter {
                 AuthMiddleware.requireAuth(ctx);
                 lotteryTypeController.getAll(ctx);
             });
-
             post(ctx -> {
                 AuthMiddleware.requireAdmin(ctx);
                 lotteryTypeController.create(ctx);
             });
         });
+
         get("users/{userId}/history", ctx -> {
             AuthMiddleware.requireAuth(ctx);
             userActionController.getUserHistory(ctx);
         });
-
-
     }
 }

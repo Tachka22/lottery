@@ -58,6 +58,11 @@ public class DrawServiceImpl implements DrawService {
     }
 
     @Override
+    public List<Draw> getAllDraws(int limit, int offset) {
+        return drawRepository.findAll(limit, offset);
+    }
+
+    @Override
     public Draw startDraw(int drawId) {
         Draw draw = drawRepository.findById(drawId)
                 .orElseThrow(() -> new IllegalArgumentException("Тираж не найден."));
@@ -128,6 +133,9 @@ public class DrawServiceImpl implements DrawService {
 
         return drawRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Тираж с именем " + name + " не найден"));
+    }
+    public List<Draw> getDrawsByStatus(DrawStatus status, int limit, int offset) {
+        return drawRepository.findByStatus(status, limit, offset);
     }
 
     private String generateWinningNumbers(LotteryType type) {
