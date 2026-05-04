@@ -11,4 +11,6 @@ public interface TicketRepository {
   List<Ticket> findAllByDrawId(int drawId);
   int markWinners(int drawId, String winningNumbers, Integer winningBonus);
   int cancelTickets(int drawId);
+  Ticket save(Ticket ticket);
+  boolean existsByDrawIdAndNumbers(int drawId, String numbers);
 }

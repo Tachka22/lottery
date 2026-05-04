@@ -3,6 +3,7 @@ package org.lottery.controller;
 import com.google.inject.Inject;
 import io.javalin.http.Context;
 import org.lottery.dto.response.ErrorResponse;
+import org.lottery.model.Ticket;
 import org.lottery.service.TicketService;
 import org.lottery.util.AuthMiddleware;
 
@@ -32,5 +33,15 @@ public class TicketController {
       return;
     }
     ctx.json(ticketService.getTicketResult(ticketId, (int) userIdLong));
+  }
+
+  public void buyTicket(Context ctx) {
+    AuthMiddleware.requireAuth(ctx);
+    Long userId = AuthMiddleware.getCurrentUserId(ctx);
+    int drawId = ctx.pathParamAsClass("drawId", Integer.class).get();
+
+    Ticket ticket = ticketService.buyTicket(drawId, userId);
+
+    ctx.status(201).json(ticket);
   }
 }

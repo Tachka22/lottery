@@ -21,6 +21,7 @@ public class LotteryModule extends AbstractModule {
         bind(ReportService.class).to(ReportServiceImpl.class).in(Scopes.SINGLETON);
         bind(LotteryTypeService.class).to(LotteryTypeServiceImpl.class).in(Scopes.SINGLETON);
         bind(UserActionsService.class).to(UserActionsServiceImpl.class).in(Scopes.SINGLETON);
+        bind(LotteryGeneratorService.class).asEagerSingleton();
 
         //repositories
         bind(DrawRepository.class).to(DrawRepositoryImpl.class).in(Scopes.SINGLETON);

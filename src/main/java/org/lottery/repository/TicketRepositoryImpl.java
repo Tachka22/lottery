@@ -129,6 +129,55 @@ public class TicketRepositoryImpl implements TicketRepository {
       throw new RuntimeException("Ошибка отмены билетов для тиража: " + drawId, e);
     }
   }
+
+  @Override
+  public Ticket save(Ticket ticket) {
+    String sql = """
+                INSERT INTO tickets (draw_id, user_id, numbers, bonus, status, created_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) RETURNING id
+                """;
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+      stmt.setInt(1, ticket.getDrawId());
+      stmt.setInt(2, ticket.getUserId());
+      stmt.setString(3, ticket.getNumbers());
+
+      if (ticket.getBonus() != null) {
+        stmt.setInt(4, ticket.getBonus());
+      } else {
+        stmt.setNull(4, Types.INTEGER);
+      }
+
+      stmt.setString(5, ticket.getStatus().name());
+
+      ResultSet rs = stmt.executeQuery();
+      if (rs.next()) {
+        ticket.setId(rs.getInt(1));
+      }
+      return ticket;
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка сохранения билета", e);
+    }
+  }
+
+  @Override
+  public boolean existsByDrawIdAndNumbers(int drawId, String numbers) {
+    String sql = "SELECT 1 FROM tickets WHERE draw_id = ? AND numbers = ?";
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+      stmt.setInt(1, drawId);
+      stmt.setString(2, numbers);
+      ResultSet rs = stmt.executeQuery();
+      return rs.next();
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка получение состояния комбинации билета", e);
+    }
+  }
+
   private Ticket mapRow(ResultSet rs) throws SQLException {
     Ticket t = new Ticket();
     t.setId(rs.getInt("id"));
