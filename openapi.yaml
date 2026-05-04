@@ -73,9 +73,6 @@ components:
         numbers: { type: string, example: "5,12,33,41,50" }
         status: { type: string, enum: [PENDING, WIN, LOSE] }
         createdAt: { type: string, format: date-time }
-    TicketCreateRequest:
-      type: object
-      description: Запрос на покупку билета (комбинация генерируется сервером)
     TicketResultResponse:
       type: object
       properties:
@@ -187,19 +184,14 @@ paths:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/TicketCreateRequest' }
+          schema: { type: integer } }
       responses:
         '201':
           description: Билет создан
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Ticket' }
-        '400': { description: Неверные числа или тираж не активен }
+        '400': { description: Тираж не активен }
         '404': { description: Тираж не найден }
 
   /tickets:

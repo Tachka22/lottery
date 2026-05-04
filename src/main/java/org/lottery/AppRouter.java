@@ -73,6 +73,10 @@ public class AppRouter {
                 AuthMiddleware.requireAdmin(ctx);
                 drawController.cancelDraw(ctx);
             });
+            post("/{drawId}/tickets", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                ticketController.buyTicket(ctx);
+            });
         });
 
         path("/tickets", () -> {

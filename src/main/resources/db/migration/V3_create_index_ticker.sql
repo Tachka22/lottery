@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_draw_numbers ON tickets(draw_id, numbers);
