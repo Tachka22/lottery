@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: postgres
     restart: unless-stopped
     environment:
@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: lottery
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -26,18 +26,21 @@ services:
       postgres:
         condition: service_healthy
 
-  app:
-    image: app-dev:latest
-    container_name: app
-    build:
-      dockerfile: Dockerfile
-      context: ./
-    environment:
-      DB_URL: "jdbc:postgresql://postgres:5432/lottery"
-      DB_USER: "postgres"
-      DB_PASSWORD: "postgres"
-    depends_on:
-      postgres:
-        condition: service_healthy
+#  backend-lottery:
+#    image: backend-lottery:latest
+#    container_name: backend
+#    ports:
+#      - "8080:8080"
+#    build:
+#      dockerfile: Dockerfile
+#      context: ./
+#    environment:
+#      DB_URL: "jdbc:postgresql://postgres:5432/lottery"
+#      DB_USER: "postgres"
+#      DB_PASSWORD: "postgres"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+
 volumes:
   pgdata:
