@@ -97,4 +97,10 @@ public class DrawController {
         int offset = ctx.queryParamAsClass("offset", Integer.class).getOrDefault(0);
         ctx.json(drawService.getDrawsByStatus(DrawStatus.FINISHED, limit, offset));
     }
+
+    public void getActiveDraws(Context ctx) {
+        int limit = ctx.queryParamAsClass("limit", Integer.class).getOrDefault(20);
+        int offset = ctx.queryParamAsClass("offset", Integer.class).getOrDefault(0);
+        ctx.json(drawService.getDrawsByStatus(DrawStatus.ACTIVE, limit, offset));
+    }
 }

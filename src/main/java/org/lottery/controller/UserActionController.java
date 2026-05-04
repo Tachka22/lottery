@@ -25,7 +25,7 @@ public class UserActionController {
                 .get();
 
         var currentUserId = AuthMiddleware.getCurrentUserId(ctx);
-        if (currentUserId != userId.longValue()) {
+        if (currentUserId != userId) {
             ctx.status(403).json(new ErrorResponse(403, "Доступ запрещён"));
             return;
         }

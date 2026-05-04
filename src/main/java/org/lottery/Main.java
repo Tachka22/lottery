@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 import org.lottery.config.LotteryModule;
@@ -20,7 +21,10 @@ public class Main {
         //DatabaseConfig.runMigrations();
 
         //Настройка DI
-        var injector = Guice.createInjector(new LotteryModule());
+        Injector injector = Guice.createInjector(
+                new LotteryModule(),
+                new org.notification.config.NotificationModule()
+        );
         var router = injector.getInstance(AppRouter.class);
 
         //Настройка сериализация

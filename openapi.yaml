@@ -73,6 +73,9 @@ components:
         numbers: { type: string, example: "5,12,33,41,50" }
         status: { type: string, enum: [PENDING, WIN, LOSE] }
         createdAt: { type: string, format: date-time }
+    TicketCreateRequest:
+      type: object
+      description: Запрос на покупку билета (комбинация генерируется сервером)
     TicketResultResponse:
       type: object
       properties:
@@ -88,6 +91,10 @@ components:
       properties:
         winningCombination: { type: string }
         winners: { type: integer }
+    CancelDrawResponse:
+      type: object
+      properties:
+        message: { type: string }
     StartDrawResponse:
       type: object
       properties:
@@ -121,18 +128,26 @@ components:
         description: { type: string, nullable: true }
     UserActionResponse:
       type: object
+      description: Запись об одном действии пользователя
       properties:
         id:
           type: integer
+          format: int32
+          description: Уникальный идентификатор записи действия
         actionType:
           type: string
+          description: Тип выполненного действия
           example: "TICKET_PURCHASE"
         details:
           type: object
-          description: "Произвольный JSON объект с деталями действия"
+          description: Дополнительные данные действия в формате JSON (структура зависит от типа действия)
+          nullable: true
+          example: { "drawId": 123, "ticketId": 456 }
         createdAt:
           type: string
           format: date-time
+          description: Время совершения действия
+          example: "2023-10-25T14:30:00Z"
 
 security:
   - bearerAuth: []
@@ -176,6 +191,26 @@ paths:
         '401': { description: Неверные учётные данные }
 
   # ---------- Пользовательские операции ----------
+  /draws/active:
+    get:
+      tags: [Draws (User)]
+      summary: Список активных тиражей (статус ACTIVE)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Draw' }
+
   /draws/{drawId}/tickets:
     post:
       tags: [Tickets]
@@ -184,14 +219,19 @@ paths:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer } }
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TicketCreateRequest' }
       responses:
         '201':
           description: Билет создан
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Ticket' }
-        '400': { description: Тираж не активен }
+        '400': { description: Неверные числа или тираж не активен }
         '404': { description: Тираж не найден }
 
   /tickets:
@@ -249,8 +289,8 @@ paths:
         '403': { description: Требуется роль ADMIN }
     get:
       tags: [ Admin (Draws) ]
-      summary: Получить все тиражи
-      description: Возвращает полный список тиражей в виде массива.
+      summary: Получить все тиражи (без фильтрации и пагинации)
+      description: Возвращает полный список тиражей в виде массива. Для фильтрации используйте /draws/filter.
       responses:
         '200':
           description: Список всех тиражей
@@ -291,66 +331,54 @@ paths:
 
   /draws/{drawId}/start:
     post:
-      tags: [ Admin (Draws) ]
-      summary: Запустить тираж (перевод из DRAFT в ACTIVE)
+      tags: [Admin (Draws)]
+      summary: Начать тираж (перевести в ACTIVE)
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer, minimum: 1 }
+          schema: { type: integer }
       responses:
         '200':
-          description: Тираж запущен
+          description: Тираж активирован
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Draw' }
-        '400':
-          description: Тираж уже запущен или завершён
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-        '403': { description: Требуется роль ADMIN }
+              schema: { $ref: '#/components/schemas/StartDrawResponse' }
+        '400': { description: Невозможно начать (не DRAFT) }
 
   /draws/{drawId}/finish:
     post:
-      tags: [ Admin (Draws) ]
-      summary: Завершить тираж (генерация чисел и выбор победителей)
+      tags: [Admin (Draws)]
+      summary: Завершить тираж, сгенерировать выигрышную комбинацию и определить победителей
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer, minimum: 1 }
+          schema: { type: integer }
       responses:
         '200':
-          description: Тираж успешно завершён
+          description: Тираж завершён
           content:
             application/json:
               schema: { $ref: '#/components/schemas/FinishDrawResponse' }
-        '400':
-          description: Только активный тираж может быть завершён
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-        '403': { description: Требуется роль ADMIN }
+        '400': { description: Тираж не ACTIVE }
 
   /draws/{drawId}/cancel:
     post:
-      tags: [ Admin (Draws) ]
-      summary: Отменить тираж
+      tags: [Admin (Draws)]
+      summary: Отменить тираж (статус CANCELLED, все билеты → LOSE)
       parameters:
         - name: drawId
           in: path
           required: true
-          schema: { type: integer, minimum: 1 }
+          schema: { type: integer }
       responses:
         '200':
           description: Тираж отменён
-        '400':
-          description: Нельзя отменить уже завершённый тираж
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-        '403': { description: Требуется роль ADMIN }
+              schema: { $ref: '#/components/schemas/CancelDrawResponse' }
+        '400': { description: Нельзя отменить (уже FINISHED или CANCELLED) }
 
   /draws/completed:
     get:
@@ -369,65 +397,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DrawListResponse' }
-        '403': { description: Требуется роль ADMIN }
-
-  /draws/{drawId}:
-    get:
-      tags: [ Admin (Draws), Draws (User) ]
-      summary: Получить информацию о тираже
-      parameters:
-        - name: drawId
-          in: path
-          required: true
-          description: Уникальный идентификатор тиража
-          schema:
-            type: integer
-            minimum: 1
-      responses:
-        '200':
-          description: Данные тиража
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Draw' }
-        '404':
-          description: Тираж с таким ID не найден
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-        '400':
-          description: Некорректный формат ID
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-
-  /draws/where:
-    get:
-      tags: [ Admin (Draws), Draws (User) ]
-      summary: Найти тираж по имени
-      description: Поиск тиража с использованием query-параметра name. Требуется авторизация.
-      parameters:
-        - name: name
-          in: query
-          required: true
-          description: Имя тиража (можно использовать кириллицу и пробелы)
-          schema:
-            type: string
-            minLength: 1
-          example: "Новогодний розыгрыш 2025"
-      responses:
-        '200':
-          description: Тираж найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Draw'
-        '401':
-          description: Не авторизован
-        '404':
-          description: Тираж с таким именем не найден
-        '400':
-          description: Не передан параметр name
-
 
   # ---------- Отчёты (только ADMIN для отчётов по тиражам, USER для своих билетов) ----------
   /reports/draws/{drawId}:
@@ -510,25 +479,54 @@ paths:
               schema: { $ref: '#/components/schemas/LotteryType' }
         '400': { description: Ошибка валидации или тип уже существует }
         '403': { description: Требуется роль ADMIN }
-
   /users/{userId}/history:
     get:
-      tags: [ Users ]
-      summary: История пользователя
+      tags:
+        - Users
+      summary: Получить историю действий пользователя
+      description: Возвращает список действий (покупок билетов, входов и т.д.) для указанного пользователя. Доступ разрешен только самому пользователю.
+      operationId: getUserHistory
       parameters:
         - name: userId
           in: path
           required: true
+          description: Уникальный идентификатор пользователя
           schema:
             type: integer
+            format: int32
+            minimum: 1
       responses:
         '200':
-          description: Успешный ответ
+          description: Успешный ответ со списком действий
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/UserActionResponse'
+        '400':
+          description: Некорректный ID пользователя (не положительное число)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Доступ к чужой истории запрещен
+          description: Доступ запрещен (пользователь пытается просмотреть чужую историю)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: История не найдена или пользователь не существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: [ ]

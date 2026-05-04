@@ -45,6 +45,10 @@ public class AppRouter {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getCompletedDraws(ctx);
             });
+            get("/active", ctx -> {
+                AuthMiddleware.requireAuth(ctx);
+                drawController.getActiveDraws(ctx);
+            });
             get("/filter", ctx -> {
                 AuthMiddleware.requireAuth(ctx);
                 drawController.getDrawByFilter(ctx);
