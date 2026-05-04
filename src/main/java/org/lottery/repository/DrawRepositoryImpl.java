@@ -60,6 +60,28 @@ public class DrawRepositoryImpl implements DrawRepository {
             throw new RuntimeException("Ошибка получения всех тиражей", e);
         }
     }
+    @Override
+    public List<Draw> findAll(int limit, int offset) {
+        var sql = "SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description " +
+                "FROM draws ORDER BY id DESC LIMIT ? OFFSET ?";
+
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, limit);
+            stmt.setInt(2, offset);
+
+            var rs = stmt.executeQuery();
+            List<Draw> draws = new ArrayList<>();
+            while (rs.next()) {
+                draws.add(mapRowToDraw(rs));
+            }
+            return draws;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка получения тиражей", e);
+        }
+    }
+
 
 
     @Override
@@ -120,6 +142,36 @@ public class DrawRepositoryImpl implements DrawRepository {
             throw new RuntimeException("Ошибка получения тиража по имени", e);
         }
     }
+
+    @Override
+    public List<Draw> findByStatus(DrawStatus status, int limit, int offset) {
+        var sql = """
+        SELECT id, name, lottery_type_name, status, winning_numbers, winning_bonus, created_at, finished_at, description 
+        FROM draws 
+        WHERE status = ? 
+        ORDER BY id DESC 
+        LIMIT ? OFFSET ?
+        """;
+
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, status.name().toUpperCase());
+            stmt.setInt(2, limit);
+            stmt.setInt(3, offset);
+
+            var rs = stmt.executeQuery();
+            List<Draw> draws = new ArrayList<>();
+            while (rs.next()) {
+                draws.add(mapRowToDraw(rs));
+            }
+            return draws;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка получения тиражей по статусу: " + status, e);
+        }
+    }
+
+
 
     private Draw mapRowToDraw(ResultSet rs) throws SQLException {
         var draw = new Draw();

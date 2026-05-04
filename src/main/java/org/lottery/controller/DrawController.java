@@ -3,6 +3,7 @@ package org.lottery.controller;
 import com.google.inject.Inject;
 import io.javalin.http.Context;
 import org.lottery.dto.request.DrawCreateRequest;
+import org.lottery.model.enums.DrawStatus;
 import org.lottery.service.DrawService;
 
 import java.net.URLDecoder;
@@ -71,5 +72,29 @@ public class DrawController {
         return ctx.pathParamAsClass("drawId", Integer.class)
                 .check(id -> id > 0, "ID тиража должен быть положительным числом")
                 .get();
+    }
+
+    public void getDrawByFilter(Context ctx) {
+        int limit = ctx.queryParamAsClass("limit", Integer.class).getOrDefault(20);
+        int offset = ctx.queryParamAsClass("offset", Integer.class).getOrDefault(0);
+        String statusParam = ctx.queryParam("status");
+
+        if (statusParam == null || statusParam.isBlank()) {
+            ctx.json(drawService.getAllDraws(limit, offset));
+            return;
+        }
+
+        try {
+            DrawStatus status = DrawStatus.valueOf(statusParam.toUpperCase());
+            ctx.json(drawService.getDrawsByStatus(status, limit, offset));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result("Недопустимый статус: " + statusParam);
+        }
+    }
+
+    public void getCompletedDraws(Context ctx) {
+        int limit = ctx.queryParamAsClass("limit", Integer.class).getOrDefault(20);
+        int offset = ctx.queryParamAsClass("offset", Integer.class).getOrDefault(0);
+        ctx.json(drawService.getDrawsByStatus(DrawStatus.FINISHED, limit, offset));
     }
 }
