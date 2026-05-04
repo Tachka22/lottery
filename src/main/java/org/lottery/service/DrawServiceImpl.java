@@ -6,30 +6,43 @@ import org.lottery.dto.response.FinishDrawResponse;
 import org.lottery.exception.NotFoundException;
 import org.lottery.model.Draw;
 import org.lottery.model.LotteryType;
+import org.lottery.model.ParticipantNotificationInfo;
 import org.lottery.model.enums.DrawStatus;
 import org.lottery.repository.DrawRepository;
 import org.lottery.repository.LotteryTypeRepository;
 import org.lottery.repository.TicketRepository;
+import org.notification.NotificationService;
+import org.notification.model.Channel;
+import org.notification.model.NotificationEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+
 public class DrawServiceImpl implements DrawService {
+    private static final Logger logger = LoggerFactory.getLogger(DrawServiceImpl.class);
+
+
     private final DrawRepository drawRepository;
     private final LotteryTypeRepository lotteryTypeRepository;
     private final TicketRepository ticketRepository;
+    private final NotificationService notificationService;
 
     @Inject
     public DrawServiceImpl(DrawRepository drawRepository,
                            LotteryTypeRepository lotteryTypeRepository,
-                           TicketRepository ticketRepository) {
+                           TicketRepository ticketRepository, NotificationService notificationService) {
         this.drawRepository = drawRepository;
         this.lotteryTypeRepository = lotteryTypeRepository;
         this.ticketRepository = ticketRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -100,6 +113,8 @@ public class DrawServiceImpl implements DrawService {
         drawRepository.update(draw);
         ticketRepository.markWinners(drawId, winningNumbers,  winningBonus);
 
+        CompletableFuture.runAsync(() -> sendBulkNotifications(drawId, "Тираж завершен!"));
+
         return new FinishDrawResponse(winningNumbers, winningBonus);
     }
 
@@ -117,6 +132,8 @@ public class DrawServiceImpl implements DrawService {
         draw.setStatus(DrawStatus.CANCELLED);
         draw.setFinishedAt(LocalDateTime.now());
         drawRepository.update(draw);
+
+        CompletableFuture.runAsync(() -> sendBulkNotifications(drawId, "Тираж отменен."));
     }
 
     @Override
@@ -156,5 +173,25 @@ public class DrawServiceImpl implements DrawService {
 
     private int generateBonus(LotteryType type) {
         return ThreadLocalRandom.current().nextInt(type.getBonusMin(), type.getBonusMax() + 1);
+    }
+
+    private void sendBulkNotifications(int drawId, String reason) {
+        List<ParticipantNotificationInfo> participants = ticketRepository.findParticipantsByDrawId(drawId);
+
+        for (ParticipantNotificationInfo info : participants) {
+            try {
+                String text = reason + (info.isWinner() ? " Вы выиграли!" : " К сожалению, в этот раз мимо.");
+
+                NotificationEvent event = new NotificationEvent(
+                        info.email(),
+                        text
+                );
+
+                notificationService.notify(event, Channel.EMAIL);
+
+            } catch (Exception e) {
+                logger.error("Ошибка отправки для {}", info.email(), e);
+            }
+        }
     }
 }

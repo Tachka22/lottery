@@ -13,6 +13,9 @@ import org.lottery.model.enums.TicketStatus;
 import org.lottery.repository.DrawRepository;
 import org.lottery.repository.LotteryTypeRepository;
 import org.lottery.repository.TicketRepository;
+import org.lottery.repository.UserRepository;
+import org.notification.NotificationService;
+import org.notification.model.NotificationEvent;
 
 import java.util.*;
 
@@ -21,13 +24,17 @@ public class TicketServiceImpl implements TicketService {
   private final DrawRepository drawRepository;
   private final LotteryTypeRepository typeRepository;
   private final LotteryGeneratorService generator;
+  private final AuditService auditService;
+  private final UserRepository userRepository;
 
   @Inject
-  public TicketServiceImpl(TicketRepository ticketRepository, DrawRepository drawRepository, LotteryTypeRepository typeRepository, LotteryGeneratorService lotteryGeneratorService) {
+  public TicketServiceImpl(TicketRepository ticketRepository, DrawRepository drawRepository, LotteryTypeRepository typeRepository, LotteryGeneratorService lotteryGeneratorService, AuditService auditService, NotificationService notificationService, UserRepository userRepository) {
     this.ticketRepository = ticketRepository;
     this.drawRepository = drawRepository;
     this.typeRepository = typeRepository;
     this.generator = lotteryGeneratorService;
+    this.auditService = auditService;
+    this.userRepository = userRepository;
   }
 
   @Override
@@ -61,7 +68,7 @@ public class TicketServiceImpl implements TicketService {
     return new TicketResultResponse(ticket.getStatus(), winningCombo);
   }
 
-  public Ticket buyTicket(int drawId, long userId) {
+  public Ticket buyTicket(int drawId, int userId) {
     Draw draw = drawRepository.findById(drawId)
             .orElseThrow(() -> new IllegalArgumentException("Тираж не найден."));
 
@@ -95,6 +102,9 @@ public class TicketServiceImpl implements TicketService {
     ticket.setBonus(combination.bonus());
     ticket.setStatus(TicketStatus.PENDING);
 
-    return ticketRepository.save(ticket);
+    var res = ticketRepository.save(ticket);
+    Map<String, Object> params = Map.of("numbers", ticket.getNumbers());
+    auditService.emit(userId, "BUY_TICKET", params);
+    return res;
   }
 }

@@ -1,5 +1,6 @@
 package org.lottery.repository;
 
+import org.lottery.model.ParticipantNotificationInfo;
 import org.lottery.model.Ticket;
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +14,5 @@ public interface TicketRepository {
   int cancelTickets(int drawId);
   Ticket save(Ticket ticket);
   boolean existsByDrawIdAndNumbers(int drawId, String numbers);
+  List<ParticipantNotificationInfo> findParticipantsByDrawId(int drawId);
 }

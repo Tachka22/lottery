@@ -37,7 +37,7 @@ public class TicketController {
 
   public void buyTicket(Context ctx) {
     AuthMiddleware.requireAuth(ctx);
-    Long userId = AuthMiddleware.getCurrentUserId(ctx);
+    var userId = AuthMiddleware.getCurrentUserId(ctx);
     int drawId = ctx.pathParamAsClass("drawId", Integer.class).get();
 
     Ticket ticket = ticketService.buyTicket(drawId, userId);
