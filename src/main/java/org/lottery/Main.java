@@ -7,6 +7,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
+import org.lottery.config.DatabaseConfig;
 import org.lottery.config.LotteryModule;
 import org.lottery.dto.response.ErrorResponse;
 import org.lottery.service.AuditService;
@@ -18,13 +19,10 @@ public class Main {
     private static final int PORT = 8080;
 
     public static void main(String[] args) {
-        //DatabaseConfig.runMigrations();
+        DatabaseConfig.runMigrations();
 
         //Настройка DI
-        Injector injector = Guice.createInjector(
-                new LotteryModule(),
-                new org.notification.config.NotificationModule()
-        );
+        Injector injector = Guice.createInjector(new LotteryModule());
         var router = injector.getInstance(AppRouter.class);
 
         //Настройка сериализация

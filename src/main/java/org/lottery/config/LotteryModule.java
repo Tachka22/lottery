@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 public class LotteryModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new org.notification.config.NotificationModule());
+
         bind(DataSource.class).toInstance(DatabaseConfig.getDataSource());
 
         //services

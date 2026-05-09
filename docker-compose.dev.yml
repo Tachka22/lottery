@@ -26,21 +26,21 @@ services:
       postgres:
         condition: service_healthy
 
-#  backend-lottery:
-#    image: backend-lottery:latest
-#    container_name: backend
-#    ports:
-#      - "8080:8080"
-#    build:
-#      dockerfile: Dockerfile
-#      context: ./
-#    environment:
-#      DB_URL: "jdbc:postgresql://postgres:5432/lottery"
-#      DB_USER: "postgres"
-#      DB_PASSWORD: "postgres"
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
+  backend-lottery:
+    image: backend-lottery:latest
+    container_name: backend
+    ports:
+      - "8080:8080"
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    environment:
+      DB_URL: "jdbc:postgresql://postgres:5432/lottery"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
